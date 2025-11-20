@@ -18,7 +18,14 @@ import Coach from "./pages/Coach";
 import Courses from "./pages/Courses";
 import Mentors from "./pages/Mentors";
 import Analytics from "./pages/Analytics";
+import Features from "./pages/Features";
+import HowItWorks from "./pages/HowItWorks";
+import About from "./pages/About";
 import NotFound from "./pages/NotFound";
+import ResetPassword from "./pages/auth/ResetPassword";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import Tracker from "./pages/Tracker";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -33,7 +40,9 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth/login" element={<Login />} />
             <Route path="/auth/signup" element={<Signup />} />
-            
+            <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+
             {/* Protected Routes */}
             <Route
               path="/dashboard"
@@ -99,7 +108,26 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            
+            <Route
+              path="/tracker"
+              element={
+                <ProtectedRoute>
+                  <Tracker />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/features" element={<Features />} />
+            <Route path="/how-it-works" element={<HowItWorks />} />
+            <Route path="/about" element={<About />} />
+
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
