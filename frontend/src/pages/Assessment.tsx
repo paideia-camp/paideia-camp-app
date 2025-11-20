@@ -1,13 +1,19 @@
-import { useState } from 'react';
-import { DashboardLayout } from '@/components/layouts/DashboardLayout';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
-import { Target, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { useState } from "react";
+import { DashboardLayout } from "@/components/layouts/DashboardLayout";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+import { Target, ArrowRight, CheckCircle2 } from "lucide-react";
 
 export default function Assessment() {
   const [step, setStep] = useState(1);
@@ -16,11 +22,11 @@ export default function Assessment() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    goals: '',
-    background: '',
-    experience: '',
-    essayDraft: '',
-    targetPrograms: '',
+    goals: "",
+    background: "",
+    experience: "",
+    essayDraft: "",
+    targetPrograms: "",
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -29,31 +35,34 @@ export default function Assessment() {
 
   const handleSubmit = async () => {
     setLoading(true);
-    
+
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 2000));
-    
+
     setLoading(false);
     toast({
-      title: 'Assessment Complete!',
-      description: 'Your readiness report is ready.',
+      title: "Assessment Complete!",
+      description: "Your readiness report is ready.",
     });
-    navigate('/assessment/results');
+    navigate("/assessment/results");
   };
 
   const totalSteps = 4;
 
   return (
     <DashboardLayout>
-      <div className="max-w-3xl mx-auto space-y-8">
+      <div className="max-w-3xl mx-auto space-y-8 relative top-40 pb-12">
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-2 text-primary mb-4">
             <Target className="h-8 w-8" />
           </div>
-          <h1 className="text-3xl font-bold">Readiness Diagnostic Assessment</h1>
+          <h1 className="text-3xl font-bold">
+            Readiness Diagnostic Assessment
+          </h1>
           <p className="text-muted-foreground">
-            Help us understand your goals and background to provide personalized recommendations
+            Help us understand your goals and background to provide personalized
+            recommendations
           </p>
         </div>
 
@@ -64,8 +73,8 @@ export default function Assessment() {
               <div
                 className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${
                   i + 1 <= step
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : 'border-muted bg-background text-muted-foreground'
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-muted bg-background text-muted-foreground"
                 }`}
               >
                 {i + 1 < step ? <CheckCircle2 className="h-5 w-5" /> : i + 1}
@@ -73,7 +82,7 @@ export default function Assessment() {
               {i < totalSteps - 1 && (
                 <div
                   className={`flex-1 h-1 mx-2 transition-colors ${
-                    i + 1 < step ? 'bg-primary' : 'bg-muted'
+                    i + 1 < step ? "bg-primary" : "bg-muted"
                   }`}
                 />
               )}
@@ -85,16 +94,17 @@ export default function Assessment() {
         <Card>
           <CardHeader>
             <CardTitle>
-              {step === 1 && 'Your Goals'}
-              {step === 2 && 'Background & Experience'}
-              {step === 3 && 'Target Programs'}
-              {step === 4 && 'Essay Draft (Optional)'}
+              {step === 1 && "Your Goals"}
+              {step === 2 && "Background & Experience"}
+              {step === 3 && "Target Programs"}
+              {step === 4 && "Essay Draft (Optional)"}
             </CardTitle>
             <CardDescription>
-              {step === 1 && 'What opportunities are you pursuing?'}
-              {step === 2 && 'Tell us about your professional and academic journey'}
-              {step === 3 && 'Which programs are you interested in?'}
-              {step === 4 && 'Share a draft for AI-powered feedback'}
+              {step === 1 && "What opportunities are you pursuing?"}
+              {step === 2 &&
+                "Tell us about your professional and academic journey"}
+              {step === 3 && "Which programs are you interested in?"}
+              {step === 4 && "Share a draft for AI-powered feedback"}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -106,7 +116,7 @@ export default function Assessment() {
                     id="goals"
                     placeholder="e.g., I want to pursue a master's degree in public policy and eventually work in international development..."
                     value={formData.goals}
-                    onChange={(e) => handleInputChange('goals', e.target.value)}
+                    onChange={(e) => handleInputChange("goals", e.target.value)}
                     rows={6}
                   />
                 </div>
@@ -121,7 +131,9 @@ export default function Assessment() {
                     id="background"
                     placeholder="Degree, institution, field of study..."
                     value={formData.background}
-                    onChange={(e) => handleInputChange('background', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("background", e.target.value)
+                    }
                     rows={4}
                   />
                 </div>
@@ -131,7 +143,9 @@ export default function Assessment() {
                     id="experience"
                     placeholder="Your work experience, leadership roles, achievements..."
                     value={formData.experience}
-                    onChange={(e) => handleInputChange('experience', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("experience", e.target.value)
+                    }
                     rows={4}
                   />
                 </div>
@@ -146,7 +160,9 @@ export default function Assessment() {
                     id="targetPrograms"
                     placeholder="e.g., YALI, Chevening, Rhodes Scholarship, Tony Elumelu Foundation..."
                     value={formData.targetPrograms}
-                    onChange={(e) => handleInputChange('targetPrograms', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("targetPrograms", e.target.value)
+                    }
                     rows={4}
                   />
                   <p className="text-sm text-muted-foreground">
@@ -159,16 +175,21 @@ export default function Assessment() {
             {step === 4 && (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="essayDraft">Personal Statement or Essay</Label>
+                  <Label htmlFor="essayDraft">
+                    Personal Statement or Essay
+                  </Label>
                   <Textarea
                     id="essayDraft"
                     placeholder="Paste your essay draft here for detailed AI feedback..."
                     value={formData.essayDraft}
-                    onChange={(e) => handleInputChange('essayDraft', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("essayDraft", e.target.value)
+                    }
                     rows={10}
                   />
                   <p className="text-sm text-muted-foreground">
-                    This is optional but highly recommended for comprehensive feedback.
+                    This is optional but highly recommended for comprehensive
+                    feedback.
                   </p>
                 </div>
               </div>
@@ -190,7 +211,7 @@ export default function Assessment() {
                 </Button>
               ) : (
                 <Button onClick={handleSubmit} disabled={loading}>
-                  {loading ? 'Analyzing...' : 'Complete Assessment'}
+                  {loading ? "Analyzing..." : "Complete Assessment"}
                 </Button>
               )}
             </div>

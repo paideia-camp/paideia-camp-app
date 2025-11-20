@@ -1,17 +1,19 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
-import { GraduationCap } from 'lucide-react';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import Logo from "../../images/padei_logo.png";
+import HeroImage from "/src/images/pade_hero.png";
+import Navigation from "@/components/navigation";
 
 export default function Signup() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { signUp, user } = useAuth();
   const navigate = useNavigate();
@@ -19,7 +21,7 @@ export default function Signup() {
 
   // Redirect if already logged in
   if (user) {
-    navigate('/dashboard');
+    navigate("/dashboard");
     return null;
   }
 
@@ -28,27 +30,27 @@ export default function Signup() {
 
     if (!email || !password || !fullName || !confirmPassword) {
       toast({
-        title: 'Error',
-        description: 'Please fill in all fields',
-        variant: 'destructive',
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
       });
       return;
     }
 
     if (password !== confirmPassword) {
       toast({
-        title: 'Error',
-        description: 'Passwords do not match',
-        variant: 'destructive',
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
       });
       return;
     }
 
     if (password.length < 6) {
       toast({
-        title: 'Error',
-        description: 'Password must be at least 6 characters',
-        variant: 'destructive',
+        title: "Error",
+        description: "Password must be at least 6 characters",
+        variant: "destructive",
       });
       return;
     }
@@ -59,44 +61,57 @@ export default function Signup() {
 
     if (error) {
       toast({
-        title: 'Signup Failed',
+        title: "Signup Failed",
         description: error.message,
-        variant: 'destructive',
+        variant: "destructive",
       });
     } else {
       toast({
-        title: 'Account Created!',
-        description: 'Please check your email to verify your account.',
+        title: "Account Created!",
+        description: "Please check your email to verify your account.",
       });
-      navigate('/auth/login');
+      navigate("/auth/login");
     }
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-white lg:bg-transparent">
+      {/* Navigation - visible only on mobile and tablet */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50">
+        <Navigation />
+      </div>
+
       {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-primary p-12 flex-col justify-between text-primary-foreground">
-        <div className="flex items-center gap-2">
-          <GraduationCap className="h-8 w-8" />
-          <span className="text-2xl font-bold">Paideia</span>
-        </div>
-        <div className="space-y-6">
-          <h1 className="text-5xl font-bold leading-tight">
-            Start Your Journey to<br />Global Success
-          </h1>
-          <p className="text-lg text-primary-foreground/80">
-            Join thousands of African leaders preparing for world-class
-            opportunities.
-          </p>
-        </div>
-        <div className="text-sm text-primary-foreground/60">
-          © 2024 Paideia. Part of CAMP Network.
+      <div
+        className="hidden lg:flex lg:w-1/2 p-12 flex-col justify-between text-primary-foreground bg-cover bg-center bg-no-repeat relative"
+        style={{ backgroundImage: `url(${HeroImage})` }}
+      >
+        <div className="absolute inset-0 bg-black bg-opacity-40" />
+        <div className="relative z-10 flex flex-col justify-between h-full">
+          <Link to="/" className="flex items-center gap-2 cursor-pointer">
+            <img src={Logo} alt="logo" />
+            <span className="text-2xl font-bold">Paideia</span>
+          </Link>
+          <div className="space-y-6">
+            <h1 className="text-5xl font-bold leading-tight">
+              Start Your Journey to
+              <br />
+              Global Success
+            </h1>
+            <p className="text-lg text-primary-foreground/80">
+              Join thousands of African leaders preparing for world-class
+              opportunities.
+            </p>
+          </div>
+          <div className="text-sm text-primary-foreground/60">
+            © 2025 Paideia. Part of CAMP Network.
+          </div>
         </div>
       </div>
 
       {/* Right side - Form */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-md space-y-8">
+      <div className="flex-1 flex items-center justify-center p-8 pt-24 lg:pt-8 bg-[linear-gradient(180deg,_#F0E0E7_0%,_#525EE2_100%)] lg:bg-white">
+        <div className="w-full max-w-md space-y-8 bg-white lg:bg-transparent p-8 lg:p-0 rounded-2xl lg:rounded-none shadow-xl shadow-black lg:shadow-none">
           <div className="text-center lg:text-left">
             <h2 className="text-3xl font-bold">Create Your Account</h2>
             <p className="text-muted-foreground mt-2">
@@ -153,14 +168,21 @@ export default function Signup() {
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Creating Account...' : 'Create Account'}
+            <Button
+              type="submit"
+              className="w-full font-semibold bg-blue-600 hover:bg-white hover:text-blue-600 hover:border-2 hover:border-blue-600"
+              disabled={loading}
+            >
+              {loading ? "Creating Account..." : "Create Account"}
             </Button>
           </form>
 
-          <div className="text-center text-sm">
-            Already have an account?{' '}
-            <Link to="/auth/login" className="text-primary font-medium hover:underline">
+          <div className="text-center text-sm flex flex-col md:flex-row gap-4">
+            <span>Already have an account?</span>
+            <Link
+              to="/auth/login"
+              className="text-white font-medium hover:underline"
+            >
               Sign in
             </Link>
           </div>

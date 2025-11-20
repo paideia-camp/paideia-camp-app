@@ -1,5 +1,3 @@
-import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import {
   Card,
@@ -10,7 +8,6 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Target,
   Brain,
@@ -21,10 +18,6 @@ import {
   CheckCircle2,
   AlertCircle,
   ArrowUp,
-  TrendingUp,
-  BookOpen,
-  Loader2,
-  BarChart3,
 } from "lucide-react";
 import {
   ChartContainer,
@@ -38,64 +31,9 @@ import {
   YAxis,
   CartesianGrid,
   ResponsiveContainer,
-  BarChart,
-  Bar,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
 } from "recharts";
-import { supabase } from "@/lib/supabase";
 
 export default function Analytics() {
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [userStats, setUserStats] = useState({
-    overallScore: 0,
-    improvement: 0,
-    programsMatched: 0,
-    completionRate: 0,
-    assessmentsTaken: 0,
-  });
-
-  useEffect(() => {
-    if (user) {
-      loadUserAnalytics();
-    }
-  }, [user]);
-
-  const loadUserAnalytics = async () => {
-    setLoading(true);
-    try {
-      // Fetch user's assessments
-      const { data: assessments } = await supabase
-        .from("assessments")
-        .select("*")
-        .eq("user_id", user?.id)
-        .order("created_at", { ascending: true });
-
-      if (assessments && assessments.length > 0) {
-        const latestScore =
-          assessments[assessments.length - 1].readiness_score || 0;
-        const firstScore = assessments[0].readiness_score || 0;
-        const improvement = latestScore - firstScore;
-
-        setUserStats({
-          overallScore: latestScore,
-          improvement: improvement,
-          programsMatched: 8, // This would come from program matching logic
-          completionRate: 15, // This would come from course completion
-          assessmentsTaken: assessments.length,
-        });
-      }
-    } catch (error) {
-      console.error("Error loading analytics:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Progress data for chart
   const progressData = [
     { month: "Jan", score: 45 },
@@ -103,24 +41,7 @@ export default function Analytics() {
     { month: "Mar", score: 58 },
     { month: "Apr", score: 65 },
     { month: "May", score: 70 },
-    { month: "Jun", score: userStats.overallScore || 78 },
-  ];
-
-  const skillsData = [
-    { skill: "Leadership", score: 85 },
-    { skill: "Communication", score: 78 },
-    { skill: "Problem Solving", score: 82 },
-    { skill: "Teamwork", score: 90 },
-    { skill: "Innovation", score: 75 },
-  ];
-
-  const radarData = [
-    { subject: "Leadership", A: 85, fullMark: 100 },
-    { subject: "Communication", A: 78, fullMark: 100 },
-    { subject: "Critical Thinking", A: 82, fullMark: 100 },
-    { subject: "Global Awareness", A: 88, fullMark: 100 },
-    { subject: "Impact", A: 80, fullMark: 100 },
-    { subject: "Innovation", A: 75, fullMark: 100 },
+    { month: "Jun", score: 78 },
   ];
 
   const chartConfig = {
@@ -130,71 +51,39 @@ export default function Analytics() {
     },
   };
 
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </DashboardLayout>
-    );
-  }
-
   return (
     <DashboardLayout>
       <div className="space-y-8 top-40 relative pb-12">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
-            <p className="text-muted-foreground mt-2">
-              Track your preparation journey with detailed insights and
-              analytics
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="p-3 rounded-lg bg-blue-100">
-              <BarChart3 className="h-6 w-6 text-blue-600" />
-            </div>
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold">Your Progress Tracker</h1>
+          <p className="text-muted-foreground mt-2">
+            Track your preparation journey with detailed insights and analytics
+          </p>
         </div>
 
         {/* Progress Summary Card */}
         <Card className="bg-gradient-to-br from-blue-600 to-purple-600 text-white border-0">
           <CardContent className="p-8">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="text-center">
-                <div className="text-5xl font-bold mb-2">
-                  {userStats.overallScore}
-                </div>
+                <div className="text-5xl font-bold mb-2">80</div>
                 <p className="text-blue-100">Overall Score</p>
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center gap-2 mb-2">
                   <ArrowUp className="h-6 w-6 text-green-300" />
-                  <span className="text-3xl font-bold">
-                    +{userStats.improvement}%
-                  </span>
+                  <span className="text-3xl font-bold">+12%</span>
                 </div>
                 <p className="text-blue-100">Improvement</p>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold mb-2">
-                  {userStats.programsMatched}
-                </div>
+                <div className="text-3xl font-bold mb-2">8</div>
                 <p className="text-blue-100">Programs Matched</p>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold mb-2">
-                  {userStats.completionRate}%
-                </div>
+                <div className="text-3xl font-bold mb-2">15%</div>
                 <p className="text-blue-100">Completion Rate</p>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold mb-2">
-                  {userStats.assessmentsTaken}
-                </div>
-                <p className="text-blue-100">Assessments Taken</p>
               </div>
             </div>
           </CardContent>
@@ -297,7 +186,7 @@ export default function Analytics() {
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors">
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col md:flex-row items-center gap-4">
                   <div className="p-2 rounded-lg bg-blue-100">
                     <Award className="h-5 w-5 text-blue-600" />
                   </div>
@@ -514,68 +403,6 @@ export default function Analytics() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Competency Analysis - Radar Chart & Bar Chart */}
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Competency Radar</CardTitle>
-              <CardDescription>
-                Visual representation of your key skills
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer config={chartConfig} className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart data={radarData}>
-                    <PolarGrid />
-                    <PolarAngleAxis dataKey="subject" />
-                    <PolarRadiusAxis angle={90} domain={[0, 100]} />
-                    <Radar
-                      name="Skills"
-                      dataKey="A"
-                      stroke="hsl(var(--primary))"
-                      fill="hsl(var(--primary))"
-                      fillOpacity={0.6}
-                    />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Skills Comparison</CardTitle>
-              <CardDescription>
-                Your performance across different areas
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer config={chartConfig} className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={skillsData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="skill"
-                      angle={-45}
-                      textAnchor="end"
-                      height={100}
-                    />
-                    <YAxis domain={[0, 100]} />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Bar
-                      dataKey="score"
-                      fill="hsl(var(--primary))"
-                      radius={[8, 8, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Areas for Improvement */}
         <Card>
