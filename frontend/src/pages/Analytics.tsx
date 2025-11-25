@@ -46,18 +46,36 @@ import {
   PolarRadiusAxis,
   Radar,
 } from "recharts";
-import { supabase } from "@/lib/supabase";
+import {
+  fetchUserAnalytics,
+  fetchReadinessTrend,
+  fetchSkillAnalysis,
+  fetchRecentAchievements,
+  calculateAverageStudyTime,
+  type UserAnalytics,
+  type ReadinessTrend,
+  type SkillScore,
+  type Achievement,
+} from "@/services/analyticsService";
+import { toast } from "sonner";
 
 export default function Analytics() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [userStats, setUserStats] = useState({
+  const [userStats, setUserStats] = useState<UserAnalytics>({
     overallScore: 0,
     improvement: 0,
     programsMatched: 0,
     completionRate: 0,
     assessmentsTaken: 0,
+    coursesCompleted: 0,
+    coursesInProgress: 0,
+    totalStudyTime: 0,
+    currentStreak: 0,
   });
+  const [trendData, setTrendData] = useState<ReadinessTrend[]>([]);
+  const [skillsData, setSkillsData] = useState<SkillScore[]>([]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
 
   useEffect(() => {
     if (user) {
@@ -66,62 +84,40 @@ export default function Analytics() {
   }, [user]);
 
   const loadUserAnalytics = async () => {
+    if (!user?.id) return;
+
     setLoading(true);
     try {
-      // Fetch user's assessments
-      const { data: assessments } = await supabase
-        .from("assessments")
-        .select("*")
-        .eq("user_id", user?.id)
-        .order("created_at", { ascending: true });
+      // Load all analytics data in parallel
+      const [stats, trend, skills, recentAchievements] = await Promise.all([
+        fetchUserAnalytics(user.id),
+        fetchReadinessTrend(user.id),
+        fetchSkillAnalysis(user.id),
+        fetchRecentAchievements(user.id),
+      ]);
 
-      if (assessments && assessments.length > 0) {
-        const latestScore =
-          assessments[assessments.length - 1].readiness_score || 0;
-        const firstScore = assessments[0].readiness_score || 0;
-        const improvement = latestScore - firstScore;
-
-        setUserStats({
-          overallScore: latestScore,
-          improvement: improvement,
-          programsMatched: 8, // This would come from program matching logic
-          completionRate: 15, // This would come from course completion
-          assessmentsTaken: assessments.length,
-        });
-      }
+      setUserStats(stats);
+      setTrendData(trend);
+      setSkillsData(skills);
+      setAchievements(recentAchievements);
     } catch (error) {
       console.error("Error loading analytics:", error);
+      toast.error("Failed to load analytics data");
     } finally {
       setLoading(false);
     }
   };
 
-  // Progress data for chart
-  const progressData = [
-    { month: "Jan", score: 45 },
-    { month: "Feb", score: 52 },
-    { month: "Mar", score: 58 },
-    { month: "Apr", score: 65 },
-    { month: "May", score: 70 },
-    { month: "Jun", score: userStats.overallScore || 78 },
-  ];
+  // Use real trend data or show empty state
+  const progressData =
+    trendData.length > 0 ? trendData : [{ month: "No data", score: 0 }];
 
-  const skillsData = [
-    { skill: "Leadership", score: 85 },
-    { skill: "Communication", score: 78 },
-    { skill: "Problem Solving", score: 82 },
-    { skill: "Teamwork", score: 90 },
-    { skill: "Innovation", score: 75 },
-  ];
-
-  const radarData = [
-    { subject: "Leadership", A: 85, fullMark: 100 },
-    { subject: "Communication", A: 78, fullMark: 100 },
-    { subject: "Critical Thinking", A: 82, fullMark: 100 },
-    { subject: "Global Awareness", A: 88, fullMark: 100 },
-    { subject: "Impact", A: 80, fullMark: 100 },
-    { subject: "Innovation", A: 75, fullMark: 100 },
-  ];
+  // Transform skills data for radar chart
+  const radarData = skillsData.map((skill) => ({
+    subject: skill.skill,
+    A: skill.score,
+    fullMark: 100,
+  }));
 
   const chartConfig = {
     score: {
@@ -258,28 +254,38 @@ export default function Analytics() {
         <Card>
           <CardHeader>
             <CardTitle>Readiness Score Over Time</CardTitle>
-            <CardDescription>
-              Your progress over the last 6 months
-            </CardDescription>
+            <CardDescription>Your progress over time</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={progressData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Line
-                    type="monotone"
-                    dataKey="score"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={3}
-                    dot={{ fill: "hsl(var(--primary))", r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </ChartContainer>
+            {trendData.length === 0 ? (
+              <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                <div className="text-center">
+                  <TrendingUp className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p>No assessment data yet</p>
+                  <p className="text-sm">
+                    Complete an assessment to see your progress
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={progressData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line
+                      type="monotone"
+                      dataKey="score"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={3}
+                      dot={{ fill: "hsl(var(--primary))", r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            )}
           </CardContent>
         </Card>
 
@@ -421,16 +427,22 @@ export default function Analytics() {
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Average Study Time</span>
-                  <span className="font-semibold">2.5 hrs/day</span>
+                  <span className="text-sm">Total Study Time</span>
+                  <span className="font-semibold">
+                    {Math.round(userStats.totalStudyTime / 60)} hrs
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Modules Completed</span>
-                  <span className="font-semibold">12/20</span>
+                  <span className="text-sm">Courses Completed</span>
+                  <span className="font-semibold">
+                    {userStats.coursesCompleted}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Streak</span>
-                  <span className="font-semibold">7 days</span>
+                  <span className="text-sm">Current Streak</span>
+                  <span className="font-semibold">
+                    {userStats.currentStreak} days
+                  </span>
                 </div>
               </div>
             </CardContent>
@@ -440,22 +452,26 @@ export default function Analytics() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
-                Application Cycles
+                Learning Progress
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Active Applications</span>
-                  <Badge>3</Badge>
+                  <span className="text-sm">Courses In Progress</span>
+                  <Badge>{userStats.coursesInProgress}</Badge>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Upcoming Deadlines</span>
-                  <Badge variant="destructive">5</Badge>
+                  <span className="text-sm">Assessments Taken</span>
+                  <Badge variant="secondary">
+                    {userStats.assessmentsTaken}
+                  </Badge>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Submitted</span>
-                  <Badge className="bg-green-500">2</Badge>
+                  <span className="text-sm">Completion Rate</span>
+                  <Badge className="bg-green-500">
+                    {userStats.completionRate}%
+                  </Badge>
                 </div>
               </div>
             </CardContent>
@@ -471,47 +487,56 @@ export default function Analytics() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-start gap-4 p-4 rounded-lg bg-green-50 border border-green-200">
-                <div className="p-2 rounded-full bg-green-100">
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold">
-                    Completed "Leadership Foundations" Module
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Scored 95% • Nov 1, 2024
-                  </p>
-                </div>
+            {achievements.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Award className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>No achievements yet. Keep learning to earn achievements!</p>
               </div>
+            ) : (
+              <div className="space-y-4">
+                {achievements.map((achievement) => {
+                  const bgColors = {
+                    green: "bg-green-50 border-green-200",
+                    blue: "bg-blue-50 border-blue-200",
+                    purple: "bg-purple-50 border-purple-200",
+                    orange: "bg-orange-50 border-orange-200",
+                  };
+                  const iconColors = {
+                    green: "bg-green-100 text-green-600",
+                    blue: "bg-blue-100 text-blue-600",
+                    purple: "bg-purple-100 text-purple-600",
+                    orange: "bg-orange-100 text-orange-600",
+                  };
 
-              <div className="flex items-start gap-4 p-4 rounded-lg bg-blue-50 border border-blue-200">
-                <div className="p-2 rounded-full bg-blue-100">
-                  <CheckCircle2 className="h-5 w-5 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold">7-Day Learning Streak</p>
-                  <p className="text-sm text-muted-foreground">
-                    Keep it up! • Oct 30, 2024
-                  </p>
-                </div>
+                  return (
+                    <div
+                      key={achievement.id}
+                      className={`flex items-start gap-4 p-4 rounded-lg border ${
+                        bgColors[
+                          achievement.icon_color as keyof typeof bgColors
+                        ] || bgColors.green
+                      }`}
+                    >
+                      <div
+                        className={`p-2 rounded-full ${
+                          iconColors[
+                            achievement.icon_color as keyof typeof iconColors
+                          ] || iconColors.green
+                        }`}
+                      >
+                        <CheckCircle2 className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold">{achievement.title}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {achievement.description}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-
-              <div className="flex items-start gap-4 p-4 rounded-lg bg-purple-50 border border-purple-200">
-                <div className="p-2 rounded-full bg-purple-100">
-                  <CheckCircle2 className="h-5 w-5 text-purple-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold">
-                    Readiness Score Improved by 12%
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    From 68 to 80 • Oct 28, 2024
-                  </p>
-                </div>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 

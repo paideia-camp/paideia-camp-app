@@ -20,18 +20,39 @@ import {
   Sparkles,
   Upload,
   Send,
+  Loader2,
 } from "lucide-react";
+import { getCoachFeedback, CoachFeedback } from "@/services/api";
+import { toast } from "sonner";
 
 export default function Coach() {
   const [essayText, setEssayText] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
+  const [feedback, setFeedback] = useState<CoachFeedback | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
+    if (essayText.split(" ").filter((w) => w).length < 100) {
+      toast.error("Please enter at least 100 words");
+      return;
+    }
+
     setAnalyzing(true);
-    // Simulate AI analysis
-    setTimeout(() => {
+    setError(null);
+
+    try {
+      const result = await getCoachFeedback(essayText);
+      setFeedback(result);
+      toast.success("Analysis complete!");
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to analyze essay";
+      setError(errorMessage);
+      toast.error(errorMessage);
+      console.error("Analysis error:", err);
+    } finally {
       setAnalyzing(false);
-    }, 2000);
+    }
   };
 
   const features = [
@@ -62,33 +83,6 @@ export default function Coach() {
       description:
         "Recommend ways to make your narrative more compelling and memorable",
       color: "orange",
-    },
-  ];
-
-  const sampleFeedback = [
-    {
-      type: "strength",
-      title: "Strong Opening",
-      message:
-        "Your introduction effectively captures attention with a personal anecdote that demonstrates leadership.",
-      icon: CheckCircle2,
-      color: "green",
-    },
-    {
-      type: "improvement",
-      title: "Clarity Issue",
-      message:
-        "Paragraph 3 contains complex sentences that may confuse readers. Consider breaking them into shorter, clearer statements.",
-      icon: AlertCircle,
-      color: "orange",
-    },
-    {
-      type: "suggestion",
-      title: "Add Specific Examples",
-      message:
-        "Your discussion of community impact would be stronger with concrete metrics or specific outcomes.",
-      icon: Lightbulb,
-      color: "blue",
     },
   ];
 
@@ -201,7 +195,29 @@ export default function Coach() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {essayText.length === 0 ? (
+              {analyzing ? (
+                <div className="flex flex-col items-center justify-center min-h-[300px] text-center">
+                  <Loader2 className="h-16 w-16 text-purple-600 animate-spin mb-4" />
+                  <p className="text-muted-foreground">
+                    Analyzing your essay with AI...
+                  </p>
+                </div>
+              ) : error ? (
+                <div className="flex flex-col items-center justify-center min-h-[300px] text-center">
+                  <AlertCircle className="h-16 w-16 text-destructive mb-4" />
+                  <p className="text-destructive font-semibold mb-2">
+                    Analysis Failed
+                  </p>
+                  <p className="text-sm text-muted-foreground">{error}</p>
+                  <Button
+                    onClick={handleAnalyze}
+                    className="mt-4"
+                    variant="outline"
+                  >
+                    Try Again
+                  </Button>
+                </div>
+              ) : !feedback ? (
                 <div className="flex flex-col items-center justify-center min-h-[300px] text-center">
                   <Brain className="h-16 w-16 text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">
@@ -209,42 +225,140 @@ export default function Coach() {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {sampleFeedback.map((feedback, index) => {
-                    const Icon = feedback.icon;
-                    const colorClasses = {
-                      green: "bg-green-50 border-green-200",
-                      orange: "bg-orange-50 border-orange-200",
-                      blue: "bg-blue-50 border-blue-200",
-                    }[feedback.color];
-
-                    const iconColorClasses = {
-                      green: "bg-green-100 text-green-600",
-                      orange: "bg-orange-100 text-orange-600",
-                      blue: "bg-blue-100 text-blue-600",
-                    }[feedback.color];
-
-                    return (
-                      <div
-                        key={index}
-                        className={`p-4 rounded-lg border-2 ${colorClasses}`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className={`p-2 rounded-lg ${iconColorClasses}`}>
-                            <Icon className="h-4 w-4" />
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold mb-1">
-                              {feedback.title}
-                            </h4>
-                            <p className="text-sm text-gray-700">
-                              {feedback.message}
-                            </p>
-                          </div>
-                        </div>
+                <div className="space-y-6">
+                  {/* Scores */}
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="text-center p-4 rounded-lg bg-green-50 border-2 border-green-200">
+                      <div className="text-3xl font-bold text-green-600">
+                        {feedback.structureScore}
                       </div>
-                    );
-                  })}
+                      <div className="text-sm text-gray-600 mt-1">
+                        Structure
+                      </div>
+                    </div>
+                    <div className="text-center p-4 rounded-lg bg-blue-50 border-2 border-blue-200">
+                      <div className="text-3xl font-bold text-blue-600">
+                        {feedback.clarityScore}
+                      </div>
+                      <div className="text-sm text-gray-600 mt-1">Clarity</div>
+                    </div>
+                    <div className="text-center p-4 rounded-lg bg-purple-50 border-2 border-purple-200">
+                      <div className="text-3xl font-bold text-purple-600">
+                        {feedback.mindsetScore}
+                      </div>
+                      <div className="text-sm text-gray-600 mt-1">Mindset</div>
+                    </div>
+                    <div className="text-center p-4 rounded-lg bg-orange-50 border-2 border-orange-200">
+                      <div className="text-3xl font-bold text-orange-600">
+                        {feedback.overallScore}
+                      </div>
+                      <div className="text-sm text-gray-600 mt-1">Overall</div>
+                    </div>
+                  </div>
+
+                  {/* Strengths */}
+                  {feedback.strengths && feedback.strengths.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-green-600" />
+                        Strengths
+                      </h4>
+                      <ul className="space-y-2">
+                        {feedback.strengths.map((strength, index) => (
+                          <li
+                            key={index}
+                            className="flex items-start gap-2 text-sm"
+                          >
+                            <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+                            <span>{strength}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Weaknesses */}
+                  {feedback.weaknesses && feedback.weaknesses.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <AlertCircle className="h-5 w-5 text-orange-600" />
+                        Areas for Improvement
+                      </h4>
+                      <ul className="space-y-2">
+                        {feedback.weaknesses.map((weakness, index) => (
+                          <li
+                            key={index}
+                            className="flex items-start gap-2 text-sm"
+                          >
+                            <AlertCircle className="h-4 w-4 text-orange-600 flex-shrink-0 mt-0.5" />
+                            <span>{weakness}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Suggestions */}
+                  {feedback.suggestions && feedback.suggestions.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="font-semibold flex items-center gap-2">
+                        <Lightbulb className="h-5 w-5 text-blue-600" />
+                        Detailed Suggestions
+                      </h4>
+                      {feedback.suggestions.map((suggestion, index) => {
+                        const colorClasses = {
+                          structure: "bg-green-50 border-green-200",
+                          clarity: "bg-blue-50 border-blue-200",
+                          mindset: "bg-purple-50 border-purple-200",
+                          impact: "bg-orange-50 border-orange-200",
+                        }[suggestion.type];
+
+                        const iconColorClasses = {
+                          structure: "bg-green-100 text-green-600",
+                          clarity: "bg-blue-100 text-blue-600",
+                          mindset: "bg-purple-100 text-purple-600",
+                          impact: "bg-orange-100 text-orange-600",
+                        }[suggestion.type];
+
+                        return (
+                          <div
+                            key={index}
+                            className={`p-4 rounded-lg border-2 ${colorClasses}`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div
+                                className={`p-2 rounded-lg ${iconColorClasses}`}
+                              >
+                                <Lightbulb className="h-4 w-4" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h5 className="font-semibold">
+                                    {suggestion.title}
+                                  </h5>
+                                  <Badge
+                                    variant={
+                                      suggestion.priority === "high"
+                                        ? "destructive"
+                                        : suggestion.priority === "medium"
+                                        ? "default"
+                                        : "secondary"
+                                    }
+                                    className="text-xs"
+                                  >
+                                    {suggestion.priority}
+                                  </Badge>
+                                </div>
+                                <p className="text-sm text-gray-700">
+                                  {suggestion.message}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>

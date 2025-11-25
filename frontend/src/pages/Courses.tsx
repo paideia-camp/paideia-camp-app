@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import {
   Card,
@@ -20,89 +22,45 @@ import {
   CheckCircle2,
   Lock,
   Play,
+  Loader2,
 } from "lucide-react";
+import { fetchCoursesWithProgress } from "@/services/courseService";
+import type { CourseWithProgress } from "@/types/courses";
+import { toast } from "sonner";
 
 export default function Courses() {
-  const courses = [
-    {
-      id: 1,
-      title: "Leadership Foundations",
-      description:
-        "Develop core leadership skills essential for fellowship success",
-      duration: "2 hours",
-      modules: 8,
-      progress: 75,
-      status: "In Progress",
-      icon: Users,
-      color: "blue",
-      locked: false,
-    },
-    {
-      id: 2,
-      title: "Systems Thinking Essentials",
-      description:
-        "Learn to analyze complex problems and design innovative solutions",
-      duration: "1.5 hours",
-      modules: 6,
-      progress: 100,
-      status: "Completed",
-      icon: Brain,
-      color: "green",
-      locked: false,
-    },
-    {
-      id: 3,
-      title: "Global Citizenship",
-      description:
-        "Understand global challenges and your role in creating change",
-      duration: "2.5 hours",
-      modules: 10,
-      progress: 30,
-      status: "In Progress",
-      icon: Globe,
-      color: "purple",
-      locked: false,
-    },
-    {
-      id: 4,
-      title: "Effective Communication",
-      description:
-        "Master the art of clear, persuasive communication in writing and speech",
-      duration: "2 hours",
-      modules: 7,
-      progress: 0,
-      status: "Not Started",
-      icon: Target,
-      color: "orange",
-      locked: false,
-    },
-    {
-      id: 5,
-      title: "Innovation & Entrepreneurship",
-      description:
-        "Develop an entrepreneurial mindset and learn to drive innovation",
-      duration: "3 hours",
-      modules: 12,
-      progress: 0,
-      status: "Locked",
-      icon: Lightbulb,
-      color: "yellow",
-      locked: true,
-    },
-    {
-      id: 6,
-      title: "Cultural Intelligence",
-      description:
-        "Navigate diverse cultural contexts with sensitivity and awareness",
-      duration: "1.5 hours",
-      modules: 5,
-      progress: 0,
-      status: "Locked",
-      icon: Globe,
-      color: "pink",
-      locked: true,
-    },
-  ];
+  const navigate = useNavigate();
+  const [courses, setCourses] = useState<CourseWithProgress[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadCourses();
+  }, []);
+
+  const loadCourses = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchCoursesWithProgress();
+      setCourses(data);
+    } catch (error) {
+      console.error("Error loading courses:", error);
+      toast.error("Failed to load courses");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getIconComponent = (iconName: string) => {
+    const icons: Record<string, any> = {
+      Users,
+      Brain,
+      Globe,
+      Target,
+      Lightbulb,
+      BookOpen,
+    };
+    return icons[iconName] || BookOpen;
+  };
 
   const getColorClasses = (color: string) => {
     const colors: Record<string, { bg: string; text: string; border: string }> =
@@ -166,6 +124,36 @@ export default function Courses() {
     return <Badge variant="outline">Not Started</Badge>;
   };
 
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading courses...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const totalCourses = courses.length;
+  const completedCourses = courses.filter(
+    (c) => c.progress?.status === "completed"
+  ).length;
+  const inProgressCourses = courses.filter(
+    (c) => c.progress?.status === "in_progress"
+  ).length;
+  const overallProgress =
+    totalCourses > 0
+      ? Math.round(
+          courses.reduce(
+            (sum, c) => sum + (c.progress?.progress_percentage || 0),
+            0
+          ) / totalCourses
+        )
+      : 0;
+
   return (
     <DashboardLayout>
       <div className="space-y-8 top-40 relative pb-12">
@@ -189,20 +177,26 @@ export default function Courses() {
           <CardContent className="p-6">
             <div className="grid md:grid-cols-4 gap-6">
               <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600 mb-1">6</div>
+                <div className="text-3xl font-bold text-blue-600 mb-1">
+                  {totalCourses}
+                </div>
                 <p className="text-sm text-muted-foreground">Total Courses</p>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-green-600 mb-1">1</div>
+                <div className="text-3xl font-bold text-green-600 mb-1">
+                  {completedCourses}
+                </div>
                 <p className="text-sm text-muted-foreground">Completed</p>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-purple-600 mb-1">2</div>
+                <div className="text-3xl font-bold text-purple-600 mb-1">
+                  {inProgressCourses}
+                </div>
                 <p className="text-sm text-muted-foreground">In Progress</p>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-orange-600 mb-1">
-                  34%
+                  {overallProgress}%
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Overall Progress
@@ -213,94 +207,124 @@ export default function Courses() {
         </Card>
 
         {/* Course Grid */}
-        <div className="grid md:grid-cols-2 gap-6">
-          {courses.map((course) => {
-            const Icon = course.icon;
-            const colors = getColorClasses(course.color);
+        {courses.length === 0 ? (
+          <Card className="border-2">
+            <CardContent className="p-12 text-center">
+              <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">
+                No Courses Available
+              </h3>
+              <p className="text-muted-foreground">
+                Courses will appear here once they are added to the system.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-6">
+            {courses.map((course) => {
+              const Icon = getIconComponent(course.icon);
+              const colors = getColorClasses(course.color);
+              const progress = course.progress?.progress_percentage || 0;
+              const status = course.progress?.status || "not_started";
+              const isLocked = course.is_locked;
 
-            return (
-              <Card
-                key={course.id}
-                className={`border-2 ${
-                  colors.border
-                } hover:shadow-lg transition-all ${
-                  course.locked ? "opacity-60" : ""
-                }`}
-              >
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-3 rounded-lg ${colors.bg}`}>
-                        <Icon className={`h-6 w-6 ${colors.text}`} />
+              return (
+                <Card
+                  key={course.id}
+                  className={`border-2 ${
+                    colors.border
+                  } hover:shadow-lg transition-all cursor-pointer ${
+                    isLocked ? "opacity-60" : ""
+                  }`}
+                  onClick={() => !isLocked && navigate(`/courses/${course.id}`)}
+                >
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-3 rounded-lg ${colors.bg}`}>
+                          <Icon className={`h-6 w-6 ${colors.text}`} />
+                        </div>
+                        <div>
+                          <CardTitle className="text-xl">
+                            {course.title}
+                          </CardTitle>
+                          <CardDescription className="mt-1">
+                            {course.description}
+                          </CardDescription>
+                        </div>
                       </div>
-                      <div>
-                        <CardTitle className="text-xl">
-                          {course.title}
-                        </CardTitle>
-                        <CardDescription className="mt-1">
-                          {course.description}
-                        </CardDescription>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4" />
+                        <span>{course.duration_minutes} min</span>
                       </div>
+                      <div className="flex items-center gap-1">
+                        <BookOpen className="h-4 w-4" />
+                        <span>{course.modules_count || 0} modules</span>
+                      </div>
+                      {getStatusBadge(
+                        status === "completed"
+                          ? "Completed"
+                          : status === "in_progress"
+                          ? "In Progress"
+                          : isLocked
+                          ? "Locked"
+                          : "Not Started"
+                      )}
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      <span>{course.duration}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <BookOpen className="h-4 w-4" />
-                      <span>{course.modules} modules</span>
-                    </div>
-                    {getStatusBadge(course.status)}
-                  </div>
 
-                  {!course.locked && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Progress</span>
-                        <span className="font-semibold">
-                          {course.progress}%
-                        </span>
+                    {!isLocked && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">
+                            Progress
+                          </span>
+                          <span className="font-semibold">{progress}%</span>
+                        </div>
+                        <Progress value={progress} className="h-2" />
                       </div>
-                      <Progress value={course.progress} className="h-2" />
-                    </div>
-                  )}
-
-                  <Button
-                    className="w-full"
-                    disabled={course.locked}
-                    variant={course.locked ? "secondary" : "default"}
-                  >
-                    {course.locked ? (
-                      <>
-                        <Lock className="h-4 w-4 mr-2" />
-                        Complete previous courses to unlock
-                      </>
-                    ) : course.progress === 0 ? (
-                      <>
-                        <Play className="h-4 w-4 mr-2" />
-                        Start Course
-                      </>
-                    ) : course.progress === 100 ? (
-                      <>
-                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                        Review Course
-                      </>
-                    ) : (
-                      <>
-                        <Play className="h-4 w-4 mr-2" />
-                        Continue Learning
-                      </>
                     )}
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+
+                    <Button
+                      className="w-full"
+                      disabled={isLocked}
+                      variant={isLocked ? "secondary" : "default"}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isLocked) navigate(`/courses/${course.id}`);
+                      }}
+                    >
+                      {isLocked ? (
+                        <>
+                          <Lock className="h-4 w-4 mr-2" />
+                          Complete previous courses to unlock
+                        </>
+                      ) : progress === 0 ? (
+                        <>
+                          <Play className="h-4 w-4 mr-2" />
+                          Start Course
+                        </>
+                      ) : progress === 100 ? (
+                        <>
+                          <CheckCircle2 className="h-4 w-4 mr-2" />
+                          Review Course
+                        </>
+                      ) : (
+                        <>
+                          <Play className="h-4 w-4 mr-2" />
+                          Continue Learning
+                        </>
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
 
         {/* Learning Path Info */}
         <Card className="border-2 border-blue-200 bg-blue-50">

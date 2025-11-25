@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { CampAuthButton } from "@/components/camp/CampAuthButton";
+import { CampModalWrapper } from "@/components/camp/CampModalWrapper";
 import HeroImage from "/src/images/pade_hero.png";
 import Logo from "../../images/padei_logo.png";
 import Navigation from "@/components/navigation";
@@ -141,6 +143,22 @@ export default function Login() {
               {loading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
+
+          {/* Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white lg:bg-transparent px-2 text-muted-foreground">
+                Or continue with
+              </span>
+            </div>
+          </div>
+
+          {/* Web3 Authentication */}
+          <CampAuthButton variant="outline" size="lg" className="w-full" />
+          <CampModalWrapper />
 
           <div className="text-center text-sm flex flex-col md:flex-row gap-4">
             <span>Don't have an account?</span>
