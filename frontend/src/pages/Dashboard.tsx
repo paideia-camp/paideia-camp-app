@@ -1,4 +1,4 @@
-import { useAuth } from "@/contexts/AuthContext";
+import { useAccount } from "wagmi";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -25,11 +25,11 @@ import Carousel1Image from "@/images/dashboardcaurosel1.png";
 import DashboardLastImage from "@/images/dashboardlast.png";
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { address, isConnected } = useAccount();
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  const userName = user?.user_metadata?.full_name?.split(" ")[0] || "there";
+  const userName = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "there";
 
   // Personalized recommendations data
   const recommendations = [

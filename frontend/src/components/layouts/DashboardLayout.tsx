@@ -1,6 +1,6 @@
 import { ReactNode, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAccount, useDisconnect } from "wagmi";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -41,14 +41,15 @@ const navItems = [
 ];
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { user, signOut } = useAuth();
+  const { address } = useAccount();
+  const { disconnect } = useDisconnect();
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/auth/login");
+  const handleSignOut = () => {
+    disconnect();
+    navigate("/");
   };
 
   return (
@@ -101,10 +102,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">
-                      {user?.user_metadata?.full_name || "User"}
+                      Wallet Connected
                     </p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {user?.email}
+                    <p className="text-xs leading-none text-muted-foreground font-mono">
+                      {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Not connected"}
                     </p>
                   </div>
                 </DropdownMenuLabel>

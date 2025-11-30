@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAccount } from "wagmi";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -33,19 +34,20 @@ import {
   Badge,
 } from "lucide-react";
 import Footer from "@/components/Footer";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import HeroImage from "/src/images/pade_hero.png";
 
 const Index = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { address, isConnected } = useAccount();
   const [testimonialIndex, setTestimonialIndex] = useState(0);
 
-  // Redirect to dashboard if already logged in
-  if (user) {
-    navigate("/dashboard");
-    return null;
-  }
+  // Auto-navigate to dashboard when wallet connects
+  useEffect(() => {
+    if (isConnected) {
+      navigate("/dashboard");
+    }
+  }, [isConnected, navigate]);
 
   const features = [
     {
@@ -152,21 +154,7 @@ const Index = () => {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button
-                  size="lg"
-                  onClick={() => navigate("/auth/signup")}
-                  className="bg-blue-600"
-                >
-                  Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={() => navigate("/auth/login")}
-                  className="text-blue-600 border-2 border-blue-600"
-                >
-                  Sign In
-                </Button>
+                <ConnectButton />
               </div>
 
               <div className="flex items-center justify-center gap-8 text-sm text-muted-foreground pt-8">
@@ -660,11 +648,17 @@ const Index = () => {
           </p>
           <div className="flex items-center justify-center gap-4 md:gap-7 mt-5">
             <Link
-              to={user ? "/assessment" : "/auth/login"}
+              to={isConnected ? "/assessment" : "/"}
+              onClick={(e) => {
+                if (!isConnected) {
+                  e.preventDefault();
+                  // User will need to connect wallet first
+                }
+              }}
               className="py-4 w-52 px-6 rounded-2xl border-b-2 border-r-2 border-black relative overflow-hidden font-semibold text-white text-center hover:shadow-lg hover:shadow-[#3728A7] hover:italic hover:font-extrabold bg-[#007BF] transition-all"
             >
               <span className="relative z-10 text-nowrap text-sm md:text-base flex justify-center items-center">
-                Start Diagnostic
+                {isConnected ? "Start Diagnostic" : "Connect Wallet"}
               </span>
             </Link>
             <a
