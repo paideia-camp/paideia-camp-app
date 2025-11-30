@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import {
   Card,
@@ -530,20 +529,9 @@ function UserMentorList() {
   );
 }
 
-// Main Component with Role-Based Routing
+// Main Component - just show user list for now
 export default function Mentors() {
-  const { isAdmin, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  // Show admin dashboard for admins, mentor list for regular users
-  return isAdmin ? <AdminMentorDashboard /> : <UserMentorList />;
+  // For now, just show the user mentor list
+  // Admin functionality can be added later with on-chain roles
+  return <UserMentorList />;
 }

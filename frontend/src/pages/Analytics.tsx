@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAccount } from "wagmi";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import {
   Card,
@@ -60,7 +60,7 @@ import {
 import { toast } from "sonner";
 
 export default function Analytics() {
-  const { user } = useAuth();
+  const { address } = useAccount();
   const [loading, setLoading] = useState(true);
   const [userStats, setUserStats] = useState<UserAnalytics>({
     overallScore: 0,
@@ -78,10 +78,11 @@ export default function Analytics() {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
 
   useEffect(() => {
-    if (user) {
-      loadUserAnalytics();
+    if (address) {
+      // loadUserAnalytics(); // Commented out - needs Web3 backend
+      setLoading(false); // For now just set loading false
     }
-  }, [user]);
+  }, [address]);
 
   const loadUserAnalytics = async () => {
     if (!user?.id) return;

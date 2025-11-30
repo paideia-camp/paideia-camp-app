@@ -1,12 +1,23 @@
 import React, { useState, useEffect } from "react";
 import Logo from "../images/padei_logo.png";
-import { Link, NavLink as RouterNavLink } from "react-router-dom";
+import { Link, NavLink as RouterNavLink, useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, X } from "lucide-react";
+import { Menu } from "lucide-react";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount } from "wagmi";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const { isConnected } = useAccount();
+  const navigate = useNavigate();
+
+  // Auto-navigate to dashboard when wallet connects
+  useEffect(() => {
+    if (isConnected) {
+      navigate("/dashboard");
+    }
+  }, [isConnected, navigate]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -57,24 +68,9 @@ const Navigation = () => {
           ))}
         </div>
 
-        {/* Desktop Sign Up Button */}
+        {/* Desktop Connect Button */}
         <div className="hidden md:flex">
-          <Link
-            to="/auth/signup"
-            className="py-2 px-6 rounded-full border-b-2 border-r-2 border-black relative overflow-hidden font-semibold text-black text-center hover:shadow-lg hover:shadow-red-500 hover:font-extrabold bg-orange-400 transition-all"
-          >
-            <span className="relative z-10 text-nowrap flex justify-center items-center">
-              Sign Up With Camp
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="10.605"
-                height="15.555"
-                className="animate-pulse mx-2"
-              >
-                <path d="m2.828 15.555 7.777-7.779L2.828 0 0 2.828l4.949 4.948L0 12.727l2.828 2.828z" />
-              </svg>
-            </span>
-          </Link>
+          <ConnectButton />
         </div>
 
         {/* Mobile Menu Button */}
@@ -101,13 +97,9 @@ const Navigation = () => {
                     {link.label}
                   </RouterNavLink>
                 ))}
-                <Link
-                  to="/auth/signup"
-                  className="py-2 px-4 rounded-full border-b-2 border-r-2 border-black font-semibold text-black bg-orange-400 text-center hover:shadow-lg hover:shadow-red-500 transition-all"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Sign Up With Camp
-                </Link>
+                <div className="pt-4">
+                  <ConnectButton />
+                </div>
               </div>
             </SheetContent>
           </Sheet>
